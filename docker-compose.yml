@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
 
-  ewm-stats-server:
+  stats-server:
     build: ./ewm-stats/stats-server
     container_name: ewm-stats-server
     ports:
