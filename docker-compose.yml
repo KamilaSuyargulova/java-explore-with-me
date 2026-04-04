@@ -29,3 +29,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_SQL_INIT_MODE: always
+
+  main-service:
+    build: ./main-service
+    container_name: main-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - stats-server
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      STATS_SERVER_URL: http://stats-server:9090
