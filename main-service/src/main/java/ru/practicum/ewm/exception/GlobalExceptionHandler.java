@@ -21,10 +21,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
@@ -36,10 +33,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(UserConflictException.class)
@@ -51,10 +45,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(CategoryValidationException.class)
@@ -66,10 +57,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(CategoryNotFoundException.class)
@@ -81,10 +69,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(CategoryConflictException.class)
@@ -96,10 +81,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(EventValidationException.class)
@@ -111,14 +93,12 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // ✅ ОДИН метод для EventNotFoundException
     @ExceptionHandler(EventNotFoundException.class)
-    public ResponseEntity<ApiError> handleEventNotFoundException(EventValidationException ex) {
+    public ResponseEntity<ApiError> handleEventNotFoundException(EventNotFoundException ex) {
         ApiError error = new ApiError(
                 ApiError.ErrorStatus.NOT_FOUND,
                 "Event Not Found",
@@ -126,10 +106,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(EventConflictException.class)
@@ -141,12 +118,8 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
-
 
     @ExceptionHandler(RequestValidationException.class)
     public ResponseEntity<ApiError> handleRequestValidationException(RequestValidationException ex) {
@@ -157,10 +130,7 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(RequestConflictException.class)
@@ -172,9 +142,6 @@ public class GlobalExceptionHandler {
                 List.of(),
                 LocalDateTime.now()
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }
