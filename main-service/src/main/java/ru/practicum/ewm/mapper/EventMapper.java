@@ -11,7 +11,6 @@ import ru.practicum.ewm.model.Event;
 import ru.practicum.ewm.model.User;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EventMapper {
@@ -89,12 +88,9 @@ public class EventMapper {
 
     public static Event mapNewEventDtoToEvent(NewEventDto dto, Category category, User initiator) {
         Event event = new Event();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime dateTime = LocalDateTime.parse(dto.getEventDate(), formatter);
         event.setAnnotation(dto.getAnnotation());
         event.setDescription(dto.getDescription());
-        event.setEventDate(dateTime);
+        event.setEventDate(dto.getEventDate());
         event.setPaid(dto.getPaid() != null ? dto.getPaid() : false);
         event.setParticipantLimit(dto.getParticipantLimit() != null ? dto.getParticipantLimit() : 0);
         event.setRequestModeration(dto.getRequestModeration() != null ? dto.getRequestModeration() : true);

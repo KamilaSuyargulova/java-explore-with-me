@@ -259,9 +259,7 @@ public class EventServiceImpl implements EventService {
         event.setState(State.PENDING);
         event.setCreatedOn(LocalDateTime.now());
         if (newEventDto.getEventDate() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            LocalDateTime getEventDate = LocalDateTime.parse(newEventDto.getEventDate(), formatter);
-            if (getEventDate.isBefore(event.getCreatedOn())) {
+            if (newEventDto.getEventDate().isBefore(event.getCreatedOn())) {
                 throw new EventValidationException("Дата Event не может быть раньше даты создания " + event.getEventDate());
             }
         }
