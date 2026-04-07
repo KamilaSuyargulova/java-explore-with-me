@@ -2,6 +2,8 @@ package ru.practicum.ewm.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.practicum.ewm.dto.ApiError;
@@ -96,7 +98,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    // ✅ ОДИН метод для EventNotFoundException
     @ExceptionHandler(EventNotFoundException.class)
     public ResponseEntity<ApiError> handleEventNotFoundException(EventNotFoundException ex) {
         ApiError error = new ApiError(
@@ -144,4 +145,29 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                "Некорректный формат данных: " + ex.getMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                ex.getBindingResult().getAllErrors().get(0).getDefaultMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
 }

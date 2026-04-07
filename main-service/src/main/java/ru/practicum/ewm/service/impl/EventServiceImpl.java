@@ -381,7 +381,7 @@ public class EventServiceImpl implements EventService {
             throw new EventValidationException("Не корректно заполнено поле annotation");
         }
         if (newEventDto.getParticipantLimit() == null || newEventDto.getParticipantLimit() < 0) {
-            throw new EventValidationException("Не корректно заполнено поле annotation");
+            throw new EventValidationException("Не корректно заполнено поле participantLimit");
         }
     }
 }
