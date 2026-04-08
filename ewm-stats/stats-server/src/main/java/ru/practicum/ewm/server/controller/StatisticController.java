@@ -34,6 +34,11 @@ public class StatisticController {
             @RequestParam(value = "end") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
             @RequestParam(value = "uris", required = false) List<String> uris,
             @RequestParam(value = "unique", required = false, defaultValue = "false") Boolean unique) {
+
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
         return statisticService.getStats(start, end, uris, unique);
     }
 }
