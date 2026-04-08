@@ -80,6 +80,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public ParticipationRequestDto addPrivateRequest(Long userId, Long eventId) {
 
+        if (eventId == null) {
+            throw new RequestValidationException("Не указан eventId");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User не найден"));
         Event event = eventRepository.findById(eventId)
@@ -88,12 +92,15 @@ public class UserServiceImpl implements UserService {
         if (event.getInitiator().getId().equals(userId)) {
             throw new UserConflictException("Инициатор не может подать заявку на своё событие");
         }
+
+        if (!event.getState().equals(State.PUBLISHED)) {
+            throw new UserConflictException("Event еще не опубликован");
+        }
+
         if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
             throw new UserConflictException("Заявка уже существует");
         }
-        if (event.getState().equals(State.CANCELED) || event.getState().equals(State.PENDING)) {
-            throw new UserConflictException("Event еще не опубликован");
-        }
+
         if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
             throw new EventConflictException("Превышен лимит участников Event");
         }

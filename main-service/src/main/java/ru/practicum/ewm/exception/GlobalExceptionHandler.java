@@ -14,18 +14,6 @@ import java.util.List;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserValidationException.class)
-    public ResponseEntity<ApiError> handleUserValidationException(UserValidationException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiError> handleUserNotFoundException(UserNotFoundException ex) {
         ApiError error = new ApiError(
@@ -36,30 +24,6 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(UserConflictException.class)
-    public ResponseEntity<ApiError> handleUserConflictException(UserConflictException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.CONFLICT,
-                "User Conflict",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(CategoryValidationException.class)
-    public ResponseEntity<ApiError> handleCategoryValidationException(CategoryValidationException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(CategoryNotFoundException.class)
@@ -74,30 +38,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-    @ExceptionHandler(CategoryConflictException.class)
-    public ResponseEntity<ApiError> handleCategoryConflictException(CategoryConflictException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.CONFLICT,
-                "Category Conflict",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(EventValidationException.class)
-    public ResponseEntity<ApiError> handleEventValidationException(EventValidationException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
     @ExceptionHandler(EventNotFoundException.class)
     public ResponseEntity<ApiError> handleEventNotFoundException(EventNotFoundException ex) {
         ApiError error = new ApiError(
@@ -108,42 +48,6 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(EventConflictException.class)
-    public ResponseEntity<ApiError> handleEventConflictException(EventConflictException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.CONFLICT,
-                "Event Conflict",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    @ExceptionHandler(RequestValidationException.class)
-    public ResponseEntity<ApiError> handleRequestValidationException(RequestValidationException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.BAD_REQUEST,
-                "Incorrectly made request.",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(RequestConflictException.class)
-    public ResponseEntity<ApiError> handleRequestConflictException(RequestConflictException ex) {
-        ApiError error = new ApiError(
-                ApiError.ErrorStatus.CONFLICT,
-                "Request Conflict",
-                ex.getMessage(),
-                List.of(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -170,4 +74,61 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler({
+            RequestConflictException.class,
+            UserConflictException.class,
+            EventConflictException.class,
+            CategoryConflictException.class
+    })
+    public ResponseEntity<ApiError> handleConflict(RuntimeException ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.CONFLICT,
+                "For the requested operation the conditions are not met.",
+                ex.getMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler({
+            RequestValidationException.class,
+            EventValidationException.class,
+            UserValidationException.class,
+            CategoryValidationException.class
+    })
+    public ResponseEntity<ApiError> handleValidation(RuntimeException ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                ex.getMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.BAD_REQUEST,
+                "Incorrectly made request.",
+                "Неверный формат параметра: " + ex.getName(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneralException(Exception ex) {
+        ApiError error = new ApiError(
+                ApiError.ErrorStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                ex.getMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 }

@@ -49,26 +49,25 @@ public class EventServiceImpl implements EventService {
                                              int size) {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime rangeStartFormatted;
-        LocalDateTime rangeEndFormatted;
+        LocalDateTime rangeStartFormatted = null;
+        LocalDateTime rangeEndFormatted = null;
 
-        if (rangeStart == null || rangeEnd.isBlank()) {
-            rangeStartFormatted = null;
-        } else {
+        if (rangeStart != null && !rangeStart.isBlank()) {
             rangeStartFormatted = LocalDateTime.parse(rangeStart, formatter);
         }
-        if (rangeEnd == null || rangeEnd.isBlank()) {
-            rangeEndFormatted = null;
-        } else {
+        if (rangeEnd != null && !rangeEnd.isBlank()) {
             rangeEndFormatted = LocalDateTime.parse(rangeEnd, formatter);
         }
+
         Pageable pageRequest = PageRequest.of(from / size, size);
+
         List<State> stateEnums = null;
         if (states != null && !states.isEmpty()) {
             stateEnums = states.stream()
                     .map(State::valueOf)
                     .collect(Collectors.toList());
         }
+
         Page<Event> events = eventRepository.findEventsByAdminFilters(
                 users, stateEnums, categories, rangeStartFormatted, rangeEndFormatted, pageRequest
         );
@@ -84,23 +83,26 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event с таким номером = " + eventId + " не найден"));
         if (request.getStateAction() != null) {
-            if (request.getStateAction().equals(StateActionAdmin.REJECT_EVENT) && event.getState().equals(State.PUBLISHED)) {
+            if (request.getStateAction().equals(StateActionAdmin.REJECT_EVENT)
+                    && event.getState().equals(State.PUBLISHED)) {
                 throw new EventConflictException("Event" + eventId + " уже опубликован и не может быть отменен");
-            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT) && event.getState().equals(State.PUBLISHED)) {
+            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT)
+                    && event.getState().equals(State.PUBLISHED)) {
                 throw new EventConflictException("Event " + eventId + " уже опубликован");
-            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT) && event.getState().equals(State.PENDING)) {
+            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT)
+                    && event.getState().equals(State.PENDING)) {
+                if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+                    throw new EventConflictException("Дата события должна быть не ранее чем за час от текущего момента");
+                }
                 event.setState(State.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
-            } else if (request.getStateAction().equals(StateActionAdmin.REJECT_EVENT) && event.getState().equals(State.PENDING)) {
+            } else if (request.getStateAction().equals(StateActionAdmin.REJECT_EVENT)
+                    && event.getState().equals(State.PENDING)) {
                 event.setState(State.CANCELED);
-                eventRepository.save(event);
-                return EventMapper.mapToEventFullDto(event);
-            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT) && event.getState().equals(State.CANCELED)) {
+            } else if (request.getStateAction().equals(StateActionAdmin.PUBLISH_EVENT)
+                    && event.getState().equals(State.CANCELED)) {
                 throw new EventConflictException("Event " + eventId + " был отменен и не может быть опубликован");
             }
-        }
-        if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            throw new UserConflictException("Превышен лимит участников Event");
         }
         if (request.getAnnotation() != null) {
             event.setAnnotation(request.getAnnotation());
@@ -111,13 +113,15 @@ public class EventServiceImpl implements EventService {
         if (request.getEventDate() != null) {
             LocalDateTime newDate = request.getEventDate();
             if (newDate.isBefore(LocalDateTime.now().plusHours(1))) {
-                throw new RequestValidationException("Дата Event должна быть не менее чем на 1 час позже от текущего времени.");
+                throw new RequestValidationException("Дата Event должна быть не менее чем на 1 час позже от " +
+                        "текущего времени.");
             }
             event.setEventDate(newDate);
         }
         if (request.getCategory() != null) {
             Category category = categoryRepository.findById(request.getCategory())
-                    .orElseThrow(() -> new CategoryNotFoundException("Category с таким номером = " + request.getCategory() + " не найдена"));
+                    .orElseThrow(() -> new CategoryNotFoundException("Category с таким номером = "
+                            + request.getCategory() + " не найдена"));
             event.setCategory(category);
         }
         if (request.getLocation() != null) {
@@ -135,8 +139,8 @@ public class EventServiceImpl implements EventService {
         if (request.getTitle() != null) {
             event.setTitle(request.getTitle());
         }
-        Event updated = eventRepository.save(event);
 
+        Event updated = eventRepository.save(event);
         return EventMapper.mapToEventFullDto(updated);
     }
 
@@ -156,24 +160,20 @@ public class EventServiceImpl implements EventService {
         LocalDateTime rangeStartFormatted;
         LocalDateTime rangeEndFormatted;
 
-        if (rangeStart == null || rangeEnd.isBlank()) {
-            Event event = eventRepository.findFirstByOrderByCreatedOnAsc().orElseThrow(() ->
-                    new EventNotFoundException("Event не найден"));
-            rangeStartFormatted = event.getCreatedOn();
+        if (rangeStart == null || rangeStart.isBlank()) {
+            rangeStartFormatted = LocalDateTime.now();
         } else {
             rangeStartFormatted = LocalDateTime.parse(rangeStart, formatter);
         }
+
         if (rangeEnd == null || rangeEnd.isBlank()) {
-            Event event = eventRepository.findFirstByOrderByCreatedOnDesc().orElseThrow(() ->
-                    new EventNotFoundException("Event не найден"));
-            rangeEndFormatted = event.getCreatedOn();
+            rangeEndFormatted = LocalDateTime.now().plusYears(100);
         } else {
             rangeEndFormatted = LocalDateTime.parse(rangeEnd, formatter);
         }
-        if (rangeStartFormatted != null || rangeEndFormatted != null) {
-            if (rangeEndFormatted.isBefore(rangeStartFormatted)) {
-                throw new EventValidationException("Время окончание события не должно быть раньше времени начала");
-            }
+
+        if (rangeEndFormatted.isBefore(rangeStartFormatted)) {
+            throw new EventValidationException("Время окончания события не должно быть раньше времени начала");
         }
         Sort sortObj;
         if ("VIEWS".equalsIgnoreCase(sort)) {
@@ -217,20 +217,20 @@ public class EventServiceImpl implements EventService {
         if (event.getState() != State.PUBLISHED) {
             throw new EventNotFoundException("Event не опубликован: " + eventId);
         }
+        statisticClient.endpointHit(request);
         LocalDateTime start = event.getCreatedOn();
         LocalDateTime end = LocalDateTime.now();
         List<ViewStats> stats = statisticClient.getStats(start, end,
                 List.of("/events/" + eventId),
                 true
         );
+
         long views = 0;
         if (stats != null && !stats.isEmpty()) {
             views = stats.get(0).getHits();
         }
         event.setViews(views);
         eventRepository.save(event);
-        statisticClient.endpointHit(request);
-
         return EventMapper.mapToEventFullDto(event);
     }
 
