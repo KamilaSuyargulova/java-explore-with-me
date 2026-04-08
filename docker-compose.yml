@@ -27,8 +27,21 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats-db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
-      SPRING_SQL_INIT_MODE: always
+
+  main-db:
+    image: postgres:14
+    container_name: main-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: main-db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   main-service:
     build: ./main-service
@@ -36,7 +49,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - stats-server
+      main-db:
+        condition: service_healthy
+      stats-server:
+        condition: service_started
     environment:
-      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://main-db:5432/main-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
       STATS_SERVER_URL: http://stats-server:9090
