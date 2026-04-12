@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,6 +41,7 @@ public class NewEventDto {
     private Boolean paid = false;
 
     @JsonDeserialize(using = FlexibleLongDeserializer.class)
+    @PositiveOrZero(message = "Лимит участников не может быть отрицательным")
     private Long participantLimit = 0L;
 
     @JsonDeserialize(using = FlexibleBooleanDeserializer.class)

@@ -20,7 +20,6 @@ public class AdminCompilationController {
     @ResponseStatus(HttpStatus.CREATED)
     public CompilationDto createCompilation(@Valid @RequestBody NewCompilationDto newCompilationDto) {
         return compilationService.createCompilation(newCompilationDto);
-
     }
 
     @DeleteMapping("/{compId}")

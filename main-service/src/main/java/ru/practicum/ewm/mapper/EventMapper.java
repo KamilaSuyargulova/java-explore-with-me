@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
+import ru.practicum.ewm.dto.event.UpdateEventRequest;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.Event;
 import ru.practicum.ewm.model.User;
@@ -32,7 +32,6 @@ public class EventMapper {
         eventFullDto.setRequestModeration(event.getRequestModeration());
         eventFullDto.setState(event.getState());
         eventFullDto.setTitle(event.getTitle());
-        eventFullDto.setViews(event.getViews());
         return eventFullDto;
     }
 
@@ -60,7 +59,6 @@ public class EventMapper {
         eventShortDto.setInitiator(UserMapper.mapToUserDto(event.getInitiator()));
         eventShortDto.setPaid(event.getPaid());
         eventShortDto.setTitle(event.getTitle());
-        eventShortDto.setViews(event.getViews());
         return eventShortDto;
     }
 
@@ -82,7 +80,6 @@ public class EventMapper {
         event.setRequestModeration(eventFullDto.getRequestModeration());
         event.setState(eventFullDto.getState());
         event.setTitle(eventFullDto.getTitle());
-        event.setViews(eventFullDto.getViews());
         return event;
     }
 
@@ -106,7 +103,7 @@ public class EventMapper {
         return event;
     }
 
-    public static void updateEventFromUserRequest(UpdateEventUserRequest request, Event event) {
+    public static void updateEventFromUserRequest(UpdateEventRequest request, Event event) {
         if (request.getTitle() != null) {
             event.setTitle(request.getTitle());
         }

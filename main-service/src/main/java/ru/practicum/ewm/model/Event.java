@@ -49,8 +49,6 @@ public class Event {
     @NotBlank
     @Column(name = "title", nullable = false, length = 120)
     private String title;
-    @Column(name = "views", nullable = false)
-    private Long views;
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;

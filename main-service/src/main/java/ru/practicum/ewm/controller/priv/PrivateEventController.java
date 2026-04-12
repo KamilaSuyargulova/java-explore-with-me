@@ -36,7 +36,6 @@ public class PrivateEventController {
         return eventService.getPrivateUserEventRequests(userId, eventId);
     }
 
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto createPrivateEvent(@PathVariable Long userId,
@@ -47,7 +46,7 @@ public class PrivateEventController {
     @PatchMapping("/{eventId}")
     public EventFullDto updatePrivateUserEvent(@PathVariable Long userId,
                                                @PathVariable Long eventId,
-                                               @Valid @RequestBody UpdateEventUserRequest updateRequest) {
+                                               @Valid @RequestBody UserUpdateEventRequest updateRequest) {
         return eventService.updatePrivateUserEvent(userId, eventId, updateRequest);
     }
 

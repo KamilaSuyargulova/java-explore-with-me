@@ -7,7 +7,6 @@ import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.dto.compilation.NewCompilationDto;
 import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.ewm.exception.CompilationNotFoundException;
-import ru.practicum.ewm.exception.CompilationValidationException;
 import ru.practicum.ewm.mapper.CompilationMapper;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.Event;
@@ -29,17 +28,13 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
-
-        if (newCompilationDto.getTitle() == null) {
-            throw new CompilationValidationException("Не указан title compilation");
-        } else if (newCompilationDto.getPinned() == null) {
-            throw new CompilationValidationException("Не указано поле pinned compilation");
-        }
         Compilation compilation = CompilationMapper.mapNewCompilationDtoToCompilation(newCompilationDto);
 
-        if (newCompilationDto.getEvents() != null) {
+        if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
             Set<Event> eventSet = new HashSet<>(eventRepository.findAllById(newCompilationDto.getEvents()));
             compilation.setEvents(eventSet);
+        } else {
+            compilation.setEvents(new HashSet<>());
         }
         Compilation savedCompilation = compilationRepository.save(compilation);
 
@@ -48,7 +43,6 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest updateRequest) {
-
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
                 new CompilationNotFoundException("Compilation с таким id = " + compId + " не найден"));
 
@@ -69,14 +63,14 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public void deleteCompilation(Long compId) {
-        Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new CompilationNotFoundException("Compilation с таким id = " + compId + " не найден"));
-        compilationRepository.delete(compilation);
+        if (!compilationRepository.existsById(compId)) {
+            throw new CompilationNotFoundException("Compilation с таким id = " + compId + " не найден");
+        }
+        compilationRepository.deleteById(compId);
     }
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
-
         PageRequest page = PageRequest.of(from / size, size);
         List<Compilation> compilations;
         if (pinned != null) {
@@ -97,5 +91,4 @@ public class CompilationServiceImpl implements CompilationService {
 
         return CompilationMapper.mapToCompilationDto(compilation);
     }
-
 }

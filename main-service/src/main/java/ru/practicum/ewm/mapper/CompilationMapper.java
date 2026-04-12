@@ -8,6 +8,8 @@ import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.Event;
 
+import java.util.Collections;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CompilationMapper {
 
@@ -16,13 +18,17 @@ public class CompilationMapper {
         compilationDto.setId(compilation.getId());
         compilationDto.setTitle(compilation.getTitle());
         compilationDto.setPinned(compilation.getPinned());
-        if (compilation.getEvents() != null) {
+
+        if (compilation.getEvents() != null && !compilation.getEvents().isEmpty()) {
             compilationDto.setEvents(
                     compilation.getEvents().stream()
                             .map(EventMapper::eventMapToEventShortDto)
                             .toList()
             );
+        } else {
+            compilationDto.setEvents(Collections.emptyList());
         }
+
         return compilationDto;
     }
 

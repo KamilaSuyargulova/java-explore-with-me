@@ -1,6 +1,7 @@
 package ru.practicum.ewm.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,19 +35,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createAdminUser(NewUserRequest newUserRequest) {
-
-        checkUserName(newUserRequest.getName());
-        checkUserEmail(newUserRequest.getEmail());
-        checkDuplicateEmailUser(newUserRequest.getEmail());
         User user = UserMapper.requestUserMapToUser(newUserRequest);
-        userRepository.save(user);
-
+        try {
+            userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UserConflictException("Пользователь с таким email уже существует");
+        }
         return UserMapper.mapToUserDto(user);
     }
 
     @Override
     public List<UserDto> getAdminUsers(List<Long> ids, int from, int size) {
-
         Pageable pageable = PageRequest.of(from / size, size);
         Page<User> usersPage;
         if (ids != null && !ids.isEmpty()) {
@@ -62,7 +61,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteAdminUser(Long userId) {
-
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException("User с таким Id = " + userId + " не найден");
         }
@@ -71,7 +69,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<ParticipationRequestDto> getPrivateUserRequests(Long userId) {
-
         return requestRepository.findAllByRequesterId(userId).stream()
                 .map(RequestMapper::mapToParticipationRequestDto)
                 .collect(Collectors.toList());
@@ -79,7 +76,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ParticipationRequestDto addPrivateRequest(Long userId, Long eventId) {
-
         if (eventId == null) {
             throw new RequestValidationException("Не указан eventId");
         }
@@ -124,58 +120,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ParticipationRequestDto cancelPrivateRequest(Long userId, Long requestId) {
-
         ParticipationRequest request = requestRepository.findByIdAndRequesterId(requestId, userId)
                 .orElseThrow(() -> new RequestValidationException("Заявка не найдена"));
         request.setStatus(RequestStatus.CANCELED);
         requestRepository.save(request);
 
         return RequestMapper.mapToParticipationRequestDto(request);
-    }
-
-    private void checkUserName(String userName) {
-
-        if (userName == null || userName.isBlank()) {
-            throw new UserValidationException("Некорректное имя пользователя");
-        } else if (userName.length() < 2 || userName.length() > 250) {
-            throw new UserValidationException("Некорректное имя пользователя");
-        }
-    }
-
-    private void checkUserEmail(String userEmail) {
-
-        if (userEmail == null || userEmail.isBlank() || userEmail.length() > 254) {
-            throw new UserValidationException("Некорректный email пользователя");
-        } else if (!userEmail.contains("@") || userEmail.indexOf("@") != userEmail.lastIndexOf("@")) {
-            throw new UserValidationException("Email должен содержать один символ '@'");
-        }
-
-        String[] parts = userEmail.split("@");
-        String localPart = parts[0];
-        String domainPart = parts[1];
-        String[] domainParts = domainPart.split("\\.");
-
-        for (String subPart : domainParts) {
-            if (subPart.length() > 63) {
-                throw new UserValidationException("Каждая часть домена (между точками) должна содержать не более 63 символов");
-            }
-        }
-        if (userEmail.length() < 6) {
-            throw new UserValidationException("Некорректный формат email");
-        } else if (localPart.length() > 64) {
-            throw new UserValidationException("Часть email до '@' должна содержать до 64 символов");
-        } else if (domainPart.length() < 3) {
-            throw new UserValidationException("Часть email после '@' должна содержать не менее 3 символов");
-        } else if (!domainPart.contains(".")) {
-            throw new UserValidationException("Часть email после '@' должна содержать хотя бы одну точку (например, gmail.com)");
-        }
-    }
-
-    protected void checkDuplicateEmailUser(String userEmail) {
-
-        userRepository.findByEmail(userEmail)
-                .ifPresent(u -> {
-                    throw new UserConflictException("Пользователь с таким email уже существует ");
-                });
     }
 }

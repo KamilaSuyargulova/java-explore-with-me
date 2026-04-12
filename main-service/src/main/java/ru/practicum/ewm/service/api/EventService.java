@@ -7,13 +7,11 @@ import ru.practicum.ewm.dto.participationRequest.ParticipationRequestDto;
 import java.util.List;
 
 public interface EventService {
-    List<EventFullDto> getAdminEvents(List<Long> users, List<String> states, List<Long> categories, String rangeStart, String rangeEnd, int from, int size);
+    List<EventFullDto> getAdminEvents(EventAdminSearchParams params);
 
-    EventFullDto updateAdminEvent(Long eventId, UpdateEventAdminRequest request);
+    List<EventShortDto> getPublicEvents(EventPublicSearchParams params, HttpServletRequest request);
 
-    List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-                                        String rangeStart, String rangeEnd, Boolean onlyAvailable,
-                                        String sort, Integer from, Integer size, HttpServletRequest request);
+    EventFullDto updateAdminEvent(Long eventId, AdminUpdateEventRequest request);
 
     EventFullDto getPublicEventById(Long eventId, HttpServletRequest request);
 
@@ -23,7 +21,7 @@ public interface EventService {
 
     EventFullDto getPrivateUserEvent(Long userId, Long eventId);
 
-    EventFullDto updatePrivateUserEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest);
+    EventFullDto updatePrivateUserEvent(Long userId, Long eventId, UserUpdateEventRequest updateRequest);
 
     List<ParticipationRequestDto> getPrivateUserEventRequests(Long userId, Long eventId);
 

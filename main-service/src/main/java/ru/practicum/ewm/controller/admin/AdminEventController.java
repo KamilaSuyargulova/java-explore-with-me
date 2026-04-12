@@ -2,11 +2,14 @@ package ru.practicum.ewm.controller.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.dto.event.AdminUpdateEventRequest;
+import ru.practicum.ewm.dto.event.EventAdminSearchParams;
 import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.UpdateEventAdminRequest;
 import ru.practicum.ewm.service.api.EventService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -21,17 +24,26 @@ public class AdminEventController {
             @RequestParam(required = false) List<Long> users,
             @RequestParam(required = false) List<String> states,
             @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false) String rangeStart,
-            @RequestParam(required = false) String rangeEnd,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return eventService.getAdminEvents(users, states, categories, rangeStart, rangeEnd, from, size);
+        EventAdminSearchParams params = EventAdminSearchParams.builder()
+                .users(users)
+                .states(states)
+                .categories(categories)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .from(from)
+                .size(size)
+                .build();
+        return eventService.getAdminEvents(params);
     }
 
     @PatchMapping("/{eventId}")
     public EventFullDto updateAdminEvent(@PathVariable Long eventId,
-                                         @Valid @RequestBody UpdateEventAdminRequest request) {
+                                         @Valid @RequestBody AdminUpdateEventRequest request) {
         return eventService.updateAdminEvent(eventId, request);
     }
 }
