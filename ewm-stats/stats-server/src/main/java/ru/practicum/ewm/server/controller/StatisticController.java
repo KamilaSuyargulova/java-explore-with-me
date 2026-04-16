@@ -30,10 +30,21 @@ public class StatisticController {
 
     @GetMapping(path = "/stats")
     public List<ViewStats> getStats(
-            @RequestParam(value = "start") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
-            @RequestParam(value = "end") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
+            @RequestParam(value = "start", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
             @RequestParam(value = "uris", required = false) List<String> uris,
             @RequestParam(value = "unique", required = false, defaultValue = "false") Boolean unique) {
+
+        if (start == null) {
+            throw new IllegalArgumentException("Parameter 'start' is required");
+        }
+        if (end == null) {
+            throw new IllegalArgumentException("Parameter 'end' is required");
+        }
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
         return statisticService.getStats(start, end, uris, unique);
     }
 }

@@ -22,11 +22,12 @@ public interface EndpointHitRepository extends JpaRepository<EndpointHit, Long> 
                             ELSE COUNT(eh) END)
                 FROM EndpointHit eh
                 WHERE eh.timestamp BETWEEN :start AND :end
-                  AND (:uri IS NULL OR eh.uri IN :uri)
+                  AND (:uris IS NULL OR eh.uri IN :uris)
                 GROUP BY eh.app, eh.uri
                 ORDER BY COUNT(eh) DESC
             """)
-    List<ViewStats> getAllViewStats(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
-                                    @Param("uri") List<String> uri, @Param("unique") Boolean unique);
-
+    List<ViewStats> getAllViewStats(@Param("start") LocalDateTime start,
+                                    @Param("end") LocalDateTime end,
+                                    @Param("uris") List<String> uris,
+                                    @Param("unique") Boolean unique);
 }

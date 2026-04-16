@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ViewStats {
-    private String app;
-    private String uri;
-    private Long hits;
+public class LocationDto {
+    private float latitude;
+    private float longitude;
 }
