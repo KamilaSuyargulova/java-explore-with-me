@@ -43,7 +43,7 @@ services:
       timeout: 5s
       retries: 5
 
-  main-service:
+  ewm-service:
     build: ./main-service
     container_name: main-service
     ports:
