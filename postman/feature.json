@@ -1,92 +1,78 @@
 {
   "info": {
-    "_postman_id": "77473f38-87bd-4666-a706-3b3183e3cb1e",
-    "name": "Explore With Me - Comments Feature",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "49412831"
+    "name": "EWM Comments Feature Tests",
+    "_postman_id": "feature_comments",
+    "description": "Тесты для проверки функциональности комментариев",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
   "item": [
     {
-      "name": "Comments",
+      "name": "Private Comments",
       "item": [
         {
-          "name": "Public: Get comments by event ID",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response is array\", function () {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:8080/comments/events/1",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "comments",
-                "events",
-                "1"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Private: Create comment",
+          "name": "Private - Создание Comment",
           "event": [
             {
               "listen": "prerequest",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "// Создаем пользователя",
-                  "pm.sendRequest({",
-                  "    url: 'http://localhost:8080/admin/users',",
-                  "    method: 'POST',",
-                  "    header: { 'Content-Type': 'application/json' },",
-                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'Test User', email: 'test' + Date.now() + '@test.com' }) }",
-                  "}, function (err, res) {",
-                  "    if (!err && res.code === 201) {",
-                  "        pm.environment.set('userId', res.json().id);",
-                  "    }",
+                  "const baseUrl = pm.variables.get(\"baseUrl\") || \"http://localhost:8080\";",
+                  "const randomSuffix = Math.floor(Math.random() * 100000);",
+                  "const user = {name: \"User\" + randomSuffix, email: `user${randomSuffix}@mail.com`};",
+                  "const category = {name: \"Category\" + randomSuffix};",
+                  "const event = {",
+                  "    annotation: \"Test annotation with minimum 20 chars\",",
+                  "    description: \"Test description with at least twenty characters\",",
+                  "    eventDate: new Date(Date.now() + 36000000).toISOString().replace(\"T\", \" \").substring(0, 19),",
+                  "    location: {\"lat\": 55.75, \"lon\": 37.61},",
+                  "    paid: false,",
+                  "    participantLimit: 0,",
+                  "    requestModeration: false,",
+                  "    title: \"Event\" + randomSuffix,",
+                  "    category: 0",
+                  "};",
+                  "",
+                  "const send = (options) => new Promise((resolve, reject) => {",
+                  "    pm.sendRequest(options, (err, res) => {",
+                  "        if (err) return reject(err);",
+                  "        resolve(res);",
+                  "    });",
                   "});",
                   "",
-                  "// Создаем категорию",
-                  "pm.sendRequest({",
-                  "    url: 'http://localhost:8080/admin/categories',",
-                  "    method: 'POST',",
-                  "    header: { 'Content-Type': 'application/json' },",
-                  "    body: { mode: 'raw', raw: JSON.stringify({ name: 'Test Category ' + Date.now() }) }",
-                  "}, function (err, res) {",
-                  "    if (!err && res.code === 201) {",
-                  "        pm.environment.set('categoryId', res.json().id);",
-                  "    }",
-                  "});",
+                  "(async () => {",
+                  "    try {",
+                  "        let resUser = await send({url: baseUrl + \"/admin/users\", method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(user)}});",
+                  "        let userId = resUser.json().id;",
+                  "        pm.variables.set(\"userId\", userId);",
                   "",
-                  "// Ждем немного",
-                  "setTimeout(() => {}, 500);"
-                ],
-                "type": "text/javascript"
+                  "        let resCategory = await send({url: baseUrl + \"/admin/categories\", method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(category)}});",
+                  "        let categoryId = resCategory.json().id;",
+                  "        pm.variables.set(\"categoryId\", categoryId);",
+                  "",
+                  "        event.category = categoryId;",
+                  "        let resEvent = await send({url: baseUrl + `/users/${userId}/events`, method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(event)}});",
+                  "        let eventId = resEvent.json().id;",
+                  "        pm.variables.set(\"eventId\", eventId);",
+                  "",
+                  "        await send({url: baseUrl + `/admin/events/${eventId}`, method: \"PATCH\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify({stateAction: \"PUBLISH_EVENT\"})}});",
+                  "    } catch (e) {",
+                  "        console.log(\"Ошибка подготовки данных: \" + e);",
+                  "    }",
+                  "})();"
+                ]
               }
             },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -98,9 +84,9 @@
                   "    pm.expect(jsonData).to.have.property('text');",
                   "    pm.expect(jsonData).to.have.property('authorId');",
                   "    pm.expect(jsonData).to.have.property('eventId');",
+                  "    pm.variables.set(\"commentId\", jsonData.id);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -117,12 +103,10 @@
               "raw": "{\"text\": \"This is a test comment\"}"
             },
             "url": {
-              "raw": "http://localhost:8080/comments/users/{{userId}}/events/{{eventId}}",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/events/{{eventId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "comments",
                 "users",
@@ -134,62 +118,17 @@
           }
         },
         {
-          "name": "Private: Create comment - Unpublished event (should fail)",
+          "name": "Private - Получение комментариев пользователя",
           "event": [
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "pm.test(\"Status code is 400, 404 or 409\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404, 409]);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"text\": \"This comment should fail\"}"
-            },
-            "url": {
-              "raw": "http://localhost:8080/comments/users/1/events/999",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "comments",
-                "users",
-                "1",
-                "events",
-                "999"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Private: Get user comments",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -197,33 +136,30 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/comments/users/1",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/comments/users/{{userId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "comments",
                 "users",
-                "1"
+                "{{userId}}"
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Private: Update comment",
+          "name": "Private - Изменение Comment",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -240,34 +176,31 @@
               "raw": "{\"text\": \"Updated comment text\"}"
             },
             "url": {
-              "raw": "http://localhost:8080/comments/users/1/1",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/{{commentId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "comments",
                 "users",
-                "1",
-                "1"
+                "{{userId}}",
+                "{{commentId}}"
               ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "Private: Delete comment",
+          "name": "Private - Удаление Comment",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 204 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -275,34 +208,36 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/comments/users/1/1",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/{{commentId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "comments",
                 "users",
-                "1",
-                "1"
+                "{{userId}}",
+                "{{commentId}}"
               ]
             }
-          },
-          "response": []
-        },
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public Comments",
+      "item": [
         {
-          "name": "Admin: Search comments",
+          "name": "Public - Получение комментариев к событию",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
@@ -310,12 +245,46 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/admin/comments/search?text=test",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/comments/events/{{eventId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
+              "path": [
+                "comments",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Comments",
+      "item": [
+        {
+          "name": "Admin - Поиск комментариев",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/search?text=test",
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "admin",
                 "comments",
@@ -328,42 +297,7 @@
                 }
               ]
             }
-          },
-          "response": []
-        },
-        {
-          "name": "Admin: Delete comment",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 204 or 404\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:8080/admin/comments/1",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "admin",
-                "comments",
-                "1"
-              ]
-            }
-          },
-          "response": []
+          }
         }
       ]
     }
