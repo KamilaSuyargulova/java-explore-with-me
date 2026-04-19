@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.participationRequest.ParticipationRequestDto;
-import ru.practicum.ewm.exception.RequestValidationException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.service.api.UserService;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class PrivateUserRequestController {
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addPrivateRequest(@PathVariable Long userId, @RequestParam(required = false) Long eventId) {
         if (eventId == null) {
-            throw new RequestValidationException("Не указан eventId");
+            throw new ValidationException("Не указан eventId");
         }
         return userService.addPrivateRequest(userId, eventId);
     }

@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
         try {
             userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
-            throw new UserConflictException("Пользователь с таким email уже существует");
+            throw new ConflictException("Пользователь с таким email уже существует");
         }
         return UserMapper.mapToUserDto(user);
     }
@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteAdminUser(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException("User с таким Id = " + userId + " не найден");
+            throw new NotFoundException("User с таким Id = " + userId + " не найден");
         }
         userRepository.deleteById(userId);
     }
@@ -77,28 +77,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public ParticipationRequestDto addPrivateRequest(Long userId, Long eventId) {
         if (eventId == null) {
-            throw new RequestValidationException("Не указан eventId");
+            throw new ValidationException("Не указан eventId");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User не найден"));
+                .orElseThrow(() -> new NotFoundException("User не найден"));
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFoundException("Event не найден"));
+                .orElseThrow(() -> new NotFoundException("Event не найден"));
 
         if (event.getInitiator().getId().equals(userId)) {
-            throw new UserConflictException("Инициатор не может подать заявку на своё событие");
+            throw new ConflictException("Инициатор не может подать заявку на своё событие");
         }
 
         if (!event.getState().equals(State.PUBLISHED)) {
-            throw new UserConflictException("Event еще не опубликован");
+            throw new ConflictException("Event еще не опубликован");
         }
 
         if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
-            throw new UserConflictException("Заявка уже существует");
+            throw new ConflictException("Заявка уже существует");
         }
 
         if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
-            throw new EventConflictException("Превышен лимит участников Event");
+            throw new ConflictException("Превышен лимит участников Event");
         }
 
         ParticipationRequest request = new ParticipationRequest();
@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ParticipationRequestDto cancelPrivateRequest(Long userId, Long requestId) {
         ParticipationRequest request = requestRepository.findByIdAndRequesterId(requestId, userId)
-                .orElseThrow(() -> new RequestValidationException("Заявка не найдена"));
+                .orElseThrow(() -> new ValidationException("Заявка не найдена"));
         request.setStatus(RequestStatus.CANCELED);
         requestRepository.save(request);
 

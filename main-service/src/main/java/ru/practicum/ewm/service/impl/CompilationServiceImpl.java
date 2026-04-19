@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.dto.compilation.NewCompilationDto;
 import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
-import ru.practicum.ewm.exception.CompilationNotFoundException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.CompilationMapper;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.Event;
@@ -44,7 +44,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest updateRequest) {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new CompilationNotFoundException("Compilation с таким id = " + compId + " не найден"));
+                new NotFoundException("Compilation с таким id = " + compId + " не найден"));
 
         if (updateRequest.getTitle() != null) {
             compilation.setTitle(updateRequest.getTitle());
@@ -64,7 +64,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public void deleteCompilation(Long compId) {
         if (!compilationRepository.existsById(compId)) {
-            throw new CompilationNotFoundException("Compilation с таким id = " + compId + " не найден");
+            throw new NotFoundException("Compilation с таким id = " + compId + " не найден");
         }
         compilationRepository.deleteById(compId);
     }
@@ -87,7 +87,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     public CompilationDto getCompilationById(Long compId) {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new CompilationNotFoundException("Compilation с таким id = " + compId + " не найдено"));
+                new NotFoundException("Compilation с таким id = " + compId + " не найдено"));
 
         return CompilationMapper.mapToCompilationDto(compilation);
     }

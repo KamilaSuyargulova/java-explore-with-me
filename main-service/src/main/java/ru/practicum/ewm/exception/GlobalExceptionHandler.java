@@ -15,13 +15,8 @@ import java.util.List;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({
-            UserNotFoundException.class,
-            CategoryNotFoundException.class,
-            EventNotFoundException.class,
-            CompilationNotFoundException.class
-    })
-    public ResponseEntity<ApiError> handleNotFound(RuntimeException ex) {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(NotFoundException ex) {
         ApiError error = new ApiError(
                 HttpStatus.NOT_FOUND,
                 "The required object was not found.",
@@ -32,22 +27,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-    @ExceptionHandler({
-            RequestConflictException.class,
-            UserConflictException.class,
-            EventConflictException.class,
-            CategoryConflictException.class,
-            DataIntegrityViolationException.class
-    })
-    public ResponseEntity<ApiError> handleConflict(RuntimeException ex) {
-        String message = ex.getMessage();
-        if (ex instanceof DataIntegrityViolationException) {
-            message = "Нарушение целостности данных";
-        }
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(ConflictException ex) {
         ApiError error = new ApiError(
                 HttpStatus.CONFLICT,
                 "For the requested operation the conditions are not met.",
-                message,
+                ex.getMessage(),
+                List.of(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT,
+                "Integrity constraint has been violated.",
+                "Нарушение целостности данных: " + ex.getMostSpecificCause().getMessage(),
                 List.of(),
                 LocalDateTime.now()
         );
@@ -55,11 +52,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            RequestValidationException.class,
-            EventValidationException.class,
-            UserValidationException.class,
-            CategoryValidationException.class,
-            CompilationValidationException.class,
+            ValidationException.class,
             HttpMessageNotReadableException.class,
             MethodArgumentNotValidException.class,
             org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class
