@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.client.StatisticClient;
 import ru.practicum.ewm.dto.ViewStats;
 import ru.practicum.ewm.dto.State;
+import ru.practicum.ewm.dto.comment.CountCommentsByEventDto;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.dto.participationRequest.ParticipationRequestDto;
 import ru.practicum.ewm.exception.*;
@@ -17,10 +18,7 @@ import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.mapper.LocationMapper;
 import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.model.*;
-import ru.practicum.ewm.repository.CategoryRepository;
-import ru.practicum.ewm.repository.EventRepository;
-import ru.practicum.ewm.repository.ParticipationRequestRepository;
-import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.repository.*;
 import ru.practicum.ewm.service.api.EventService;
 
 import java.time.LocalDateTime;
@@ -39,6 +37,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final ParticipationRequestRepository participationRequestRepository;
     private final StatisticClient statisticClient;
+    private final CommentRepository commentRepository;
 
     @Override
     public List<EventFullDto> getAdminEvents(EventAdminSearchParams params) {
@@ -65,6 +64,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
 
         setViewsToEventFullDtos(result);
+        setCommentsCountToEventFullDtos(result);
         return result;
     }
 
@@ -132,6 +132,7 @@ public class EventServiceImpl implements EventService {
         Event updated = eventRepository.save(event);
         EventFullDto result = EventMapper.mapToEventFullDto(updated);
         setViewsToEventFullDto(result);
+        setCommentsCountToEventFullDto(result);
         return result;
     }
 
@@ -181,6 +182,7 @@ public class EventServiceImpl implements EventService {
                 .toList();
 
         setViewsToEventShortDtos(result);
+        setCommentsCountToEventShortDtos(result);
 
         if ("VIEWS".equalsIgnoreCase(params.getSort())) {
             result = result.stream()
@@ -204,6 +206,7 @@ public class EventServiceImpl implements EventService {
 
         EventFullDto result = EventMapper.mapToEventFullDto(event);
         setViewsToEventFullDto(result);
+        setCommentsCountToEventFullDto(result);
         return result;
     }
 
@@ -215,6 +218,7 @@ public class EventServiceImpl implements EventService {
                 .map(EventMapper::eventMapToEventShortDto)
                 .toList();
         setViewsToEventShortDtos(result);
+        setCommentsCountToEventShortDtos(result);
         return result;
     }
 
@@ -248,6 +252,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Event не найден или не принадлежит User"));
         EventFullDto result = EventMapper.mapToEventFullDto(event);
         setViewsToEventFullDto(result);
+        setCommentsCountToEventFullDto(result);
         return result;
     }
 
@@ -418,5 +423,45 @@ public class EventServiceImpl implements EventService {
                 ));
 
         events.forEach(e -> e.setViews(viewMap.getOrDefault(e.getId(), 0L)));
+    }
+
+    private void setCommentsCountToEventFullDtos(List<EventFullDto> events) {
+        if (events.isEmpty()) return;
+
+        List<Long> eventIds = events.stream()
+                .map(EventFullDto::getId)
+                .collect(Collectors.toList());
+
+        List<CountCommentsByEventDto> counts = commentRepository.countCommentByEvent(eventIds);
+        Map<Long, Long> countMap = counts.stream()
+                .collect(Collectors.toMap(
+                        CountCommentsByEventDto::getEventId,
+                        CountCommentsByEventDto::getCountComments
+                ));
+
+        events.forEach(e -> e.setCommentsCount(countMap.getOrDefault(e.getId(), 0L)));
+    }
+
+    private void setCommentsCountToEventFullDto(EventFullDto event) {
+        List<CountCommentsByEventDto> counts = commentRepository.countCommentByEvent(List.of(event.getId()));
+        Long count = counts.isEmpty() ? 0L : counts.get(0).getCountComments();
+        event.setCommentsCount(count);
+    }
+
+    private void setCommentsCountToEventShortDtos(List<EventShortDto> events) {
+        if (events.isEmpty()) return;
+
+        List<Long> eventIds = events.stream()
+                .map(EventShortDto::getId)
+                .collect(Collectors.toList());
+
+        List<CountCommentsByEventDto> counts = commentRepository.countCommentByEvent(eventIds);
+        Map<Long, Long> countMap = counts.stream()
+                .collect(Collectors.toMap(
+                        CountCommentsByEventDto::getEventId,
+                        CountCommentsByEventDto::getCountComments
+                ));
+
+        events.forEach(e -> e.setCommentsCount(countMap.getOrDefault(e.getId(), 0L)));
     }
 }

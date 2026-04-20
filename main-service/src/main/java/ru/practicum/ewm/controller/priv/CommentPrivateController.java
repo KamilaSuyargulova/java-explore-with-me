@@ -6,8 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.comment.CommentDto;
-import ru.practicum.ewm.dto.comment.NewCommentDto;
-import ru.practicum.ewm.dto.comment.UpdateCommentDto;
+import ru.practicum.ewm.dto.comment.CommentRequestDto;
 import ru.practicum.ewm.service.api.CommentService;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class CommentPrivateController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto addComment(@PathVariable Long userId,
                                  @PathVariable Long eventId,
-                                 @Valid @RequestBody NewCommentDto newCommentDto) {
+                                 @Valid @RequestBody CommentRequestDto newCommentDto) {
         log.info("POST запрос на добавление комментария от userId={} к eventId={}", userId, eventId);
         return commentService.createComment(userId, eventId, newCommentDto);
     }
@@ -31,7 +30,7 @@ public class CommentPrivateController {
     @PatchMapping("/users/{userId}/{commentId}")
     public CommentDto updateComment(@PathVariable Long userId,
                                     @PathVariable Long commentId,
-                                    @Valid @RequestBody UpdateCommentDto updateCommentDto) {
+                                    @Valid @RequestBody CommentRequestDto updateCommentDto) {
         log.info("PATCH запрос на обновление комментария id={} от userId={}", commentId, userId);
         return commentService.patchByUser(userId, commentId, updateCommentDto);
     }

@@ -1,7 +1,7 @@
 package ru.practicum.ewm.mapper;
 
 import ru.practicum.ewm.dto.comment.CommentDto;
-import ru.practicum.ewm.dto.comment.NewCommentDto;
+import ru.practicum.ewm.dto.comment.CommentRequestDto;
 import ru.practicum.ewm.model.Comment;
 import ru.practicum.ewm.model.Event;
 import ru.practicum.ewm.model.User;
@@ -18,7 +18,7 @@ public class CommentMapper {
                 .build();
     }
 
-    public static Comment toComment(NewCommentDto dto, Event event, User author) {
+    public static Comment toComment(CommentRequestDto dto, Event event, User author) {
         return Comment.builder()
                 .text(dto.getText())
                 .event(event)

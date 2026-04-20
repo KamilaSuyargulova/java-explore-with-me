@@ -7,8 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.State;
 import ru.practicum.ewm.dto.comment.CommentDto;
-import ru.practicum.ewm.dto.comment.NewCommentDto;
-import ru.practicum.ewm.dto.comment.UpdateCommentDto;
+import ru.practicum.ewm.dto.comment.CommentRequestDto;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.CommentMapper;
@@ -33,8 +32,7 @@ public class CommentServiceImpl implements CommentService {
     private final EventRepository eventRepository;
 
     @Override
-    @Transactional
-    public CommentDto createComment(Long userId, Long eventId, NewCommentDto commentDto) {
+    public CommentDto createComment(Long userId, Long eventId, CommentRequestDto commentDto) {
         User user = getUser(userId);
         Event event = getEvent(eventId);
 
@@ -42,25 +40,24 @@ public class CommentServiceImpl implements CommentService {
             throw new ValidationException("Нельзя комментировать неопубликованное событие");
         }
 
-        Comment comment = CommentMapper.toComment(commentDto, event, user);
+        Comment comment = Comment.builder()
+                .text(commentDto.getText())
+                .event(event)
+                .author(user)
+                .build();
         return CommentMapper.toCommentDto(commentRepository.save(comment));
     }
 
     @Override
-    @Transactional
-    public CommentDto patchByUser(Long userId, Long commentId, UpdateCommentDto updateCommentDto) {
-        User user = getUser(userId);
-        Comment comment = getComment(commentId);
-
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new ValidationException("Пользователь не является автором комментария");
-        }
+    public CommentDto patchByUser(Long userId, Long commentId, CommentRequestDto commentDto) {
+        Comment comment = commentRepository.findByAuthorIdAndId(userId, commentId)
+                .orElseThrow(() -> new NotFoundException("Комментарий не найден или пользователь не является автором"));
 
         if (LocalDateTime.now().isAfter(comment.getCreated().plusHours(1))) {
             throw new ValidationException("Редактировать комментарий можно только в течение часа после создания");
         }
 
-        comment.setText(updateCommentDto.getText());
+        comment.setText(commentDto.getText());
         comment.setLastUpdatedOn(LocalDateTime.now());
         return CommentMapper.toCommentDto(commentRepository.save(comment));
     }
@@ -96,11 +93,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
-        Comment comment = getComment(commentId);
-        if (!comment.getAuthor().getId().equals(userId)) {
-            throw new ValidationException("Пользователь не является автором комментария");
-        }
-        commentRepository.deleteById(commentId);
+        Comment comment = commentRepository.findByAuthorIdAndId(userId, commentId)
+                .orElseThrow(() -> new NotFoundException("Комментарий не найден или пользователь не является автором"));
+        commentRepository.delete(comment);
     }
 
     @Override
