@@ -1,13 +1,12 @@
 package ru.practicum.ewm.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.category.NewCategoryDto;
-import ru.practicum.ewm.exception.CategoryConflictException;
-import ru.practicum.ewm.exception.CategoryNotFoundException;
+import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.CategoryMapper;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.repository.CategoryRepository;
@@ -27,26 +26,17 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto createAdminCategory(NewCategoryDto newCategoryDto) {
         Category category = CategoryMapper.mapNewCategoryDtoToCategory(newCategoryDto);
-        try {
-            categoryRepository.save(category);
-        } catch (DataIntegrityViolationException e) {
-            throw new CategoryConflictException("Category с таким именем уже существует");
-        }
+        categoryRepository.save(category);
         return CategoryMapper.mapToCategoryDto(category);
     }
 
     @Override
     public CategoryDto updateAdminCategory(Long catId, CategoryDto categoryDto) {
         Category oldCategory = categoryRepository.findById(catId)
-                .orElseThrow(() -> new CategoryNotFoundException("Category с таким id = " + catId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Category с таким id = " + catId + " не найдена"));
 
         oldCategory.setName(categoryDto.getName());
-
-        try {
-            categoryRepository.save(oldCategory);
-        } catch (DataIntegrityViolationException e) {
-            throw new CategoryConflictException("Category с таким именем уже существует");
-        }
+        categoryRepository.save(oldCategory);
 
         return CategoryMapper.mapToCategoryDto(oldCategory);
     }
@@ -54,11 +44,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteAdminCategory(Long catId) {
         if (!categoryRepository.existsById(catId)) {
-            throw new CategoryNotFoundException("Category с таким id = " + catId + " не найдена");
+            throw new NotFoundException("Category с таким id = " + catId + " не найдена");
         }
 
         if (eventRepository.existsByCategoryId(catId)) {
-            throw new CategoryConflictException("К данной Category " + catId + " привязано событие");
+            throw new ConflictException("К данной Category " + catId + " привязано событие");
         }
 
         categoryRepository.deleteById(catId);
@@ -76,7 +66,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto getPublicCategoryById(Long catId) {
         Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new CategoryNotFoundException("Category с таким id = " + catId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Category с таким id = " + catId + " не найдена"));
         return CategoryMapper.mapToCategoryDto(category);
     }
 }

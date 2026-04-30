@@ -1,0 +1,305 @@
+{
+  "info": {
+    "name": "EWM Comments Feature Tests",
+    "_postman_id": "feature_comments",
+    "description": "Тесты для проверки функциональности комментариев",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Private Comments",
+      "item": [
+        {
+          "name": "Private - Создание Comment",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const baseUrl = pm.variables.get(\"baseUrl\") || \"http://localhost:8080\";",
+                  "const randomSuffix = Math.floor(Math.random() * 100000);",
+                  "const user = {name: \"User\" + randomSuffix, email: `user${randomSuffix}@mail.com`};",
+                  "const category = {name: \"Category\" + randomSuffix};",
+                  "const event = {",
+                  "    annotation: \"Test annotation with minimum 20 chars\",",
+                  "    description: \"Test description with at least twenty characters\",",
+                  "    eventDate: new Date(Date.now() + 36000000).toISOString().replace(\"T\", \" \").substring(0, 19),",
+                  "    location: {\"lat\": 55.75, \"lon\": 37.61},",
+                  "    paid: false,",
+                  "    participantLimit: 0,",
+                  "    requestModeration: false,",
+                  "    title: \"Event\" + randomSuffix,",
+                  "    category: 0",
+                  "};",
+                  "",
+                  "const send = (options) => new Promise((resolve, reject) => {",
+                  "    pm.sendRequest(options, (err, res) => {",
+                  "        if (err) return reject(err);",
+                  "        resolve(res);",
+                  "    });",
+                  "});",
+                  "",
+                  "(async () => {",
+                  "    try {",
+                  "        let resUser = await send({url: baseUrl + \"/admin/users\", method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(user)}});",
+                  "        let userId = resUser.json().id;",
+                  "        pm.variables.set(\"userId\", userId);",
+                  "",
+                  "        let resCategory = await send({url: baseUrl + \"/admin/categories\", method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(category)}});",
+                  "        let categoryId = resCategory.json().id;",
+                  "        pm.variables.set(\"categoryId\", categoryId);",
+                  "",
+                  "        event.category = categoryId;",
+                  "        let resEvent = await send({url: baseUrl + `/users/${userId}/events`, method: \"POST\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify(event)}});",
+                  "        let eventId = resEvent.json().id;",
+                  "        pm.variables.set(\"eventId\", eventId);",
+                  "",
+                  "        await send({url: baseUrl + `/admin/events/${eventId}`, method: \"PATCH\", header: {\"Content-Type\": \"application/json\"}, body: {mode: \"raw\", raw: JSON.stringify({stateAction: \"PUBLISH_EVENT\"})}});",
+                  "    } catch (e) {",
+                  "        console.log(\"Ошибка подготовки данных: \" + e);",
+                  "    }",
+                  "})();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('text');",
+                  "    pm.expect(jsonData).to.have.property('authorId');",
+                  "    pm.expect(jsonData).to.have.property('eventId');",
+                  "    pm.variables.set(\"commentId\", jsonData.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"This is a test comment\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "users",
+                "{{userId}}",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Private - Получение комментариев пользователя",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Private - Изменение Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\": \"Updated comment text\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "users",
+                "{{userId}}",
+                "{{commentId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Private - Удаление Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/users/{{userId}}/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "users",
+                "{{userId}}",
+                "{{commentId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public Comments",
+      "item": [
+        {
+          "name": "Public - Получение комментариев к событию",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/events/{{eventId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Comments",
+      "item": [
+        {
+          "name": "Admin - Поиск комментариев",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/search?text=test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "comments",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "text",
+                  "value": "test"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
